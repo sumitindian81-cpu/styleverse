@@ -5,8 +5,8 @@ const cookieParser = require('cookie-parser');
 const dotenv = require('dotenv');
 
 dotenv.config();
-
-// Routes import
+const categoryRoutes = require('./routes/categoryRoutes');
+const productRoutes = require('./routes/productRoutes');
 const authRoutes = require('./routes/authRoutes');
 
 const app = express();  // ← पहले app बनाना ज़रूरी है
@@ -29,7 +29,8 @@ app.get('/api/health', (req, res) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
-
+app.use('/api/categories', categoryRoutes);
+app.use('/api/products', productRoutes);
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Error middleware:', err);

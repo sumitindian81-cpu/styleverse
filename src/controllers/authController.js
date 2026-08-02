@@ -84,7 +84,7 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    //const token = generateToken(user);
+    const token = generateToken(user);
 
     // DEBUG: Generate के तुरंत बाद verify करके देखें
     try {
