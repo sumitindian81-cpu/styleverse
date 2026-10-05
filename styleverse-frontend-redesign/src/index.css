@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* small 3D card tilt effect */
+.tilt-card {
+  transform-style: preserve-3d;
+  transition: transform 300ms ease, box-shadow 300ms ease, border-color 300ms ease;
+}
+
+.tilt-card:hover {
+  transform: translateY(-4px) rotateX(4deg) rotateY(-4deg);
+  box-shadow: 0 20px 35px rgba(15, 23, 42, 0.6);
+}
+
