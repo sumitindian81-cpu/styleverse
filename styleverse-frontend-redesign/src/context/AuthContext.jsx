@@ -356,7 +356,7 @@ export function AuthProvider({
       try {
         response =
           await apiJson(
-            "/auth/signup",
+            "/auth/register",
             {
               method: "POST",
               data: payload,
