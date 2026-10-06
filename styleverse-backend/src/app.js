@@ -29,7 +29,6 @@ const authRoutes = require("./routes/authRoutes");
 const healthRoutes = require("./routes/healthRoutes");
 const bodyProfileRoutes = require("./routes/bodyProfileRoutes");
 
-
 const app = express();
 
 /*
@@ -46,6 +45,7 @@ app.use(helmet());
  */
 const allowedOrigins = [
   "http://localhost:5173",
+  "https://styleverse-lilac.vercel.app",
 ];
 
 app.use(
@@ -222,6 +222,7 @@ app.use(
   "/api/admin",
   adminUserRoutes
 );
+
 app.use(
   "/api/body-profiles",
   bodyProfileRoutes
