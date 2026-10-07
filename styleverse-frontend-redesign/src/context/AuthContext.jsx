@@ -56,7 +56,8 @@ function readStoredUser() {
         continue;
       }
 
-      const parsed = JSON.parse(raw);
+      const parsed =
+        JSON.parse(raw);
 
       if (
         parsed &&
@@ -86,6 +87,7 @@ function storeUser(user) {
 function clearStoredAuth() {
   localStorage.removeItem("token");
   localStorage.removeItem("accessToken");
+
   localStorage.removeItem(
     "styleverse_token"
   );
@@ -109,10 +111,14 @@ export function AuthProvider({
   children,
 }) {
   const [token, setToken] =
-    useState(() => getAuthToken());
+    useState(() =>
+      getAuthToken()
+    );
 
   const [user, setUser] =
-    useState(() => readStoredUser());
+    useState(() =>
+      readStoredUser()
+    );
 
   const [loading, setLoading] =
     useState(true);
@@ -126,6 +132,14 @@ export function AuthProvider({
 
     setToken("");
     setUser(null);
+
+    // Let Navbar and any other auth-aware
+    // components know that auth state changed.
+    window.dispatchEvent(
+      new Event(
+        "styleverse-auth-changed"
+      )
+    );
   }, []);
 
   /* =======================================================
@@ -147,6 +161,12 @@ export function AuthProvider({
         storeUser(nextUser);
         setUser(nextUser);
       }
+
+      window.dispatchEvent(
+        new Event(
+          "styleverse-auth-changed"
+        )
+      );
     },
     []
   );
@@ -163,6 +183,12 @@ export function AuthProvider({
 
       storeUser(nextUser);
       setUser(nextUser);
+
+      window.dispatchEvent(
+        new Event(
+          "styleverse-auth-changed"
+        )
+      );
     },
     []
   );
@@ -176,6 +202,12 @@ export function AuthProvider({
 
     setToken("");
     setUser(null);
+
+    window.dispatchEvent(
+      new Event(
+        "styleverse-auth-changed"
+      )
+    );
   }, []);
 
   /* =======================================================
@@ -198,62 +230,25 @@ export function AuthProvider({
       }
 
       try {
-        let response = null;
+        /*
+          Current Styleverse backend route:
 
-        /* -----------------------------------------------
-           First try /user/me
-        ----------------------------------------------- */
+          GET /api/auth/me
 
-        try {
-          response = await apiJson(
-            "/user/me",
+          The API utility already includes
+          /api in the base URL.
+
+          Therefore frontend uses:
+          /auth/me
+        */
+
+        const response =
+          await apiJson(
+            "/auth/me",
             {
               method: "GET",
             }
           );
-        } catch (firstError) {
-          /*
-            If /user/me does not exist,
-            try /auth/me.
-          */
-
-          if (
-            firstError?.status !== 404
-          ) {
-            throw firstError;
-          }
-
-          try {
-            response = await apiJson(
-              "/auth/me",
-              {
-                method: "GET",
-              }
-            );
-          } catch (secondError) {
-            /*
-              Current backend may not have
-              either endpoint.
-
-              Keep cached user instead of
-              destroying an otherwise valid
-              local session.
-
-              Only logout on a definite
-              authentication failure.
-            */
-
-            if (
-              [401, 403].includes(
-                secondError?.status
-              )
-            ) {
-              logout();
-            }
-
-            return null;
-          }
-        }
 
         const nextUser =
           extractUser(response);
@@ -263,12 +258,21 @@ export function AuthProvider({
           setUser(nextUser);
         }
 
-        setToken(getAuthToken());
+        /*
+          Keep the actual current token
+          in React state.
+        */
+
+        setToken(
+          getAuthToken()
+        );
 
         return nextUser;
       } catch (error) {
         /*
-          Invalid / expired token.
+          Only clear the session when the
+          backend explicitly says the token
+          is invalid or unauthorized.
         */
 
         if (
@@ -278,6 +282,12 @@ export function AuthProvider({
         ) {
           logout();
         }
+
+        /*
+          A temporary/network/API problem
+          should not immediately destroy a
+          valid locally cached session.
+        */
 
         return null;
       } finally {
@@ -342,18 +352,23 @@ export function AuthProvider({
   );
 
   /* =======================================================
-     SIGNUP / REGISTER
+     SIGNUP
   ======================================================= */
 
   const signup = useCallback(
     async (payload) => {
       /*
         Current backend signup route:
+
         POST /api/auth/signup
 
-        The API utility already includes /api
-        in the base URL, so frontend calls /auth/signup.
+        API utility already includes
+        /api in the base URL.
+
+        Therefore:
+        /auth/signup
       */
+
       const response =
         await apiJson(
           "/auth/signup",
@@ -370,12 +385,10 @@ export function AuthProvider({
         extractUser(response);
 
       /*
-        Some signup systems immediately
-        return a JWT.
-
-        Current backend registration
-        creates the account but does not
-        return a JWT.
+        Current Styleverse backend
+        normally does not return a JWT
+        during signup because email
+        verification is required first.
       */
 
       if (nextToken) {
@@ -385,13 +398,18 @@ export function AuthProvider({
         );
       } else if (nextUser) {
         /*
-          Store returned profile even
-          when authentication token is
-          not returned.
+          Save returned profile without
+          authenticating the session.
         */
 
         storeUser(nextUser);
         setUser(nextUser);
+
+        window.dispatchEvent(
+          new Event(
+            "styleverse-auth-changed"
+          )
+        );
       }
 
       return {
@@ -420,7 +438,9 @@ export function AuthProvider({
           "styleverse_token",
         ].includes(event.key)
       ) {
-        setToken(getAuthToken());
+        setToken(
+          getAuthToken()
+        );
       }
 
       /*
@@ -434,8 +454,26 @@ export function AuthProvider({
           "user",
         ].includes(event.key)
       ) {
-        setUser(readStoredUser());
+        setUser(
+          readStoredUser()
+        );
       }
+    }
+
+    function handleAuthChanged() {
+      /*
+        Auth changes in the same tab
+        are communicated through the
+        custom Styleverse event.
+      */
+
+      setToken(
+        getAuthToken()
+      );
+
+      setUser(
+        readStoredUser()
+      );
     }
 
     window.addEventListener(
@@ -443,10 +481,20 @@ export function AuthProvider({
       handleStorage
     );
 
+    window.addEventListener(
+      "styleverse-auth-changed",
+      handleAuthChanged
+    );
+
     return () => {
       window.removeEventListener(
         "storage",
         handleStorage
+      );
+
+      window.removeEventListener(
+        "styleverse-auth-changed",
+        handleAuthChanged
       );
     };
   }, []);
@@ -460,6 +508,7 @@ export function AuthProvider({
       /*
         State
       */
+
       user,
       token,
       loading,
@@ -467,12 +516,14 @@ export function AuthProvider({
       /*
         Authentication status
       */
+
       isAuthenticated:
         Boolean(token),
 
       /*
         Auth actions
       */
+
       login,
       signup,
       logout,
@@ -480,6 +531,7 @@ export function AuthProvider({
       /*
         Session helpers
       */
+
       fetchMe,
       updateUser,
       clearAuth,
