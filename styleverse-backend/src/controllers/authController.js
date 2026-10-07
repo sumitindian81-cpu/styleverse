@@ -42,6 +42,10 @@ function getMailTransporter() {
       port,
       secure:
         String(process.env.SMTP_SECURE || "true").toLowerCase() === "true",
+
+      // Force IPv4 because Render cannot reach Gmail over IPv6.
+      family: 4,
+
       auth: {
         user: smtpUser,
         pass: smtpPass,
@@ -66,7 +70,7 @@ async function sendVerificationEmail(email, otp) {
     html: `
       <div style="font-family:Arial,sans-serif;line-height:1.6;max-width:560px;margin:0 auto;padding:24px">
         <h2 style="margin:0 0 12px">Styleverse Email Verification</h2>
-        <p>Your verification OTP is:</p>
+        <p>Your Styleverse verification OTP is:</p>
 
         <div style="
           font-size:32px;
@@ -151,15 +155,11 @@ exports.sendOtp = async (req, res, next) => {
     );
 
     user.emailVerificationOtpAttempts = 0;
-
     user.emailVerificationOtpLastSentAt = new Date();
 
     await user.save();
 
-    // ============================================================
-    // SEND OTP TO USER EMAIL
-    // ============================================================
-
+    // Send OTP through Gmail
     try {
       await sendVerificationEmail(email, otp);
     } catch (mailError) {
@@ -227,7 +227,6 @@ exports.signup = async (req, res, next) => {
 
     // Generate OTP for email verification
     const otp = generateOtp();
-
     const otpHash = hashOtp(otp);
 
     user.emailVerificationOtpHash = otpHash;
@@ -237,15 +236,11 @@ exports.signup = async (req, res, next) => {
     );
 
     user.emailVerificationOtpAttempts = 0;
-
     user.emailVerificationOtpLastSentAt = new Date();
 
     await user.save();
 
-    // ============================================================
-    // SEND SIGNUP VERIFICATION OTP TO EMAIL
-    // ============================================================
-
+    // Send signup verification OTP
     try {
       await sendVerificationEmail(normalizedEmail, otp);
     } catch (mailError) {
@@ -378,10 +373,7 @@ exports.verifyOtp = async (req, res, next) => {
       });
     }
 
-    // ============================================================
-    // EMAIL VERIFIED
-    // ============================================================
-
+    // Email verified
     user.isEmailVerified = true;
 
     user.emailVerificationOtpHash = null;
@@ -394,7 +386,6 @@ exports.verifyOtp = async (req, res, next) => {
 
     await user.save();
 
-    // Generate JWT
     const token = generateToken(user);
 
     return res.json({
@@ -558,7 +549,8 @@ exports.updateProfile = async (req, res, next) => {
     ) {
       return res.status(400).json({
         success: false,
-        message: "Name must be at least 2 characters",
+        message:
+          "Name must be at least 2 characters",
       });
     }
 
