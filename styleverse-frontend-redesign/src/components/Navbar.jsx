@@ -581,24 +581,34 @@ export default function Navbar() {
                 </button>
               </>
             ) : isLoggedIn ? (
-              <Link
-                to="/profile"
-                className="ml-3 flex items-center gap-3 border-l border-[#171513]/10 pl-5"
-              >
-                <span className="grid h-10 w-10 place-items-center rounded-full bg-[#d6c6ae] text-[12px] font-semibold tracking-[0.08em] text-[#322b24]">
-                  {initials}
-                </span>
-
-                <span className="hidden xl:block">
-                  <span className="block text-[13px] font-semibold text-[#171513]">
-                    {displayName}
+              <>
+                <Link
+                  to="/profile"
+                  className="ml-3 flex items-center gap-3 border-l border-[#171513]/10 pl-5"
+                >
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[#d6c6ae] text-[12px] font-semibold tracking-[0.08em] text-[#322b24]">
+                    {initials}
                   </span>
 
-                  <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-[#8b8479]">
-                    My profile
+                  <span className="hidden xl:block">
+                    <span className="block text-[13px] font-semibold text-[#171513]">
+                      {displayName}
+                    </span>
+
+                    <span className="mt-1 block text-[10px] font-medium uppercase tracking-[0.14em] text-[#8b8479]">
+                      My profile
+                    </span>
                   </span>
-                </span>
-              </Link>
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="ml-2 inline-flex h-10 items-center px-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#8b8479] transition hover:text-[#171513]"
+                >
+                  Logout
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"
