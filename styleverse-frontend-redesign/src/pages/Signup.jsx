@@ -173,7 +173,13 @@ export default function Signup() {
           rawMessage ||
             "Account created. Please check your email for verification instructions."
         );
-        setNeedsVerification(hasVerificationHint || true);
+        setNeedsVerification(true);
+        window.setTimeout(() => {
+          navigate("/verify-email", {
+            replace: true,
+            state: { email },
+          });
+        }, 500);
       }
     } catch (err) {
       setError(err?.message || "Signup failed. Please try again.");
