@@ -451,7 +451,7 @@ export default function Profile() {
 
       try {
         const response =
-          await apiRequest("/user/me");
+          await apiRequest("/auth/me");
 
         const nextUser =
           normalizeUser(response);
@@ -479,7 +479,7 @@ export default function Profile() {
         return;
       } catch (err) {
         // The current backend instance can render this page from the
-        // authenticated user cached at login even before /user/me is added.
+        // authenticated user cached at login even if the profile endpoint is unavailable.
         if (!storedUser) {
           throw err;
         }
@@ -661,7 +661,7 @@ export default function Profile() {
 
     try {
       const response =
-        await apiJson("/user/me", {
+        await apiJson("/auth/me", {
           method: "PATCH",
           data: {
             name,
