@@ -180,6 +180,7 @@ export default function AdminProducts() {
         const query =
           new URLSearchParams({
             limit: "50",
+            status: "active",
           });
 
         if (searchValue.trim()) {
