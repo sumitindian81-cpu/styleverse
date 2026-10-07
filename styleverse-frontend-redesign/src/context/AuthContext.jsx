@@ -347,44 +347,21 @@ export function AuthProvider({
 
   const signup = useCallback(
     async (payload) => {
-      let response;
-
       /*
-        Try the planned signup endpoint first.
+        Current backend signup route:
+        POST /api/auth/signup
+
+        The API utility already includes /api
+        in the base URL, so frontend calls /auth/signup.
       */
-
-      try {
-        response =
-          await apiJson(
-            "/auth/register",
-            {
-              method: "POST",
-              data: payload,
-            }
-          );
-      } catch (error) {
-        /*
-          Current verified backend uses
-          /auth/register.
-
-          Therefore, when /auth/signup
-          returns 404, automatically fall
-          back to /auth/register.
-        */
-
-        if (error?.status !== 404) {
-          throw error;
-        }
-
-        response =
-          await apiJson(
-            "/auth/register",
-            {
-              method: "POST",
-              data: payload,
-            }
-          );
-      }
+      const response =
+        await apiJson(
+          "/auth/signup",
+          {
+            method: "POST",
+            data: payload,
+          }
+        );
 
       const nextToken =
         extractToken(response);
